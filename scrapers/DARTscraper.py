@@ -31,6 +31,10 @@ class scraper:
 
         # offer doc data points
         self.pricing_dates = []
+        self.sub_startdates = []
+        self.sub_enddates = []
+        self.settle_dates = []
+        self.uops = []
 
 
     def search(self, company_name, start_date, end_date):
@@ -216,8 +220,56 @@ class scraper:
 
 
     def get_offer_doc_info(self):
+        self.driver.switch_to.default_content()
+        self.driver.find_element_by_link_text("제1부 모집 또는 매출에 관한 사항").click()
+
+        iframe = self.driver.find_element_by_tag_name('iframe')
+        self.driver.switch_to_frame(iframe)
+
+        tables_obj = self.driver.find_elements_by_xpath("//p[@class='section-2']/following-sibling::table")[1:4]
+
+        tables_dfs = []
+        for table_obj in tables_obj:
+            table_html = table_obj.get_attribute("outerHTML")
+            df = pd.read_html(table_html)[0]
+            tables_dfs.append(df)
+
+        dates_table = tables_dfs[-1]
+        # subscription date
+        subdates = dates_table.loc[0, '청약기일'].replace(".", "").split(" ")
+        self.sub_startdates.append(subdates[0])
+        self.sub_enddates.append(subdates[-1])
+
+        # settlement date
+        settledate = dates_table.loc[0, '납입기일'].replace(".", "")
+        self.settle_dates.append(settledate)
+
+        self.driver.switch_to.default_content()
         
-        return 0
+
+        # use of proceeds
+        self.driver.find_element_by_partial_link_text("자금의 사용목적").click()
+        self.driver.switch_to_frame(iframe)
+
+        uop_section = self.driver.find_element_by_xpath("//*[contains(text(), '2. 자금의 사용목적')]").find_element_by_xpath('..')
+        uop_table = uop_section.find_elements_by_xpath("./following-sibling::table")[1].get_attribute("outerHTML")
+        uop_df = pd.read_html(uop_table)[0]
+        uop_cols = list(uop_df.columns)
+
+        uop_dict = {
+            "운영자금": "GCP", 
+            "시설자금": "Expansion",
+            "차환": "Repay debt", 
+            "상환": "Repay debt",
+            "타법인주식획득": "Acquisition"
+        }
+
+        for uop_kr in uop_dict.keys():
+            if uop_kr in uop_cols:
+                uop = uop_dict[uop_kr]
+                self.uops.append(uop)
+                break
+        
 
     
     # def scrap_batch(self, cp_list, start_date, end_date):
