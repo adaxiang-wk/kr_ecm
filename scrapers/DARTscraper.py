@@ -1,10 +1,11 @@
 import requests
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import selenium
 import time
 import pandas as pd
+import re
+# from bs4 import BeautifulSoup
 # import sys
 # import pandas as pd 
 # from datetime import datetime, timedelta
@@ -214,11 +215,29 @@ class scraper:
         share_os_value_td = share_os_td.find_element_by_xpath("./following-sibling::td")
         share_os_value = int(share_os_value_td.find_element_by_tag_name("p").text.replace(",", ""))
         self.share_outstandings.append(share_os_value)
+
+        # find tranche filing range
+        self.driver.switch_to.default_content()
+        self.driver.find_element_by_link_text("제1부 모집 또는 매출에 관한 사항").click()
+        self.driver.switch_to_frame(iframe)
+
+        target_section = self.driver.find_element_by_xpath("//*[contains(text(), '주2)')]")
+        target_text = target_section.find_element_by_xpath("./following-sibling::td").text
+        target_text = re.sub(r"\s+|,", "", target_text)
+        range_re = r"[0-9]+원~[0-9]+원"
+        search_result = re.search(range_re, target_text, re.IGNORECASE)
+        if search_result is not None:
+            range_text = search_result.group().split("~")
+            high_range = int(range_text[-1][:-1])
+            low_range = int(range_text[0][:-1])
+        else:
+            high_range = -1
+            low_range = -1
+
+        self.tranche_filing_high.append(high_range)
+        self.tranche_filing_low.append(low_range)
+
         
-        
-
-
-
     def get_offer_doc_info(self):
         self.driver.switch_to.default_content()
         self.driver.find_element_by_link_text("제1부 모집 또는 매출에 관한 사항").click()
