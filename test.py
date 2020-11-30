@@ -5,7 +5,7 @@ import argparse
 
 def test_krxscraper():
     krxscraper = krx_scraper()
-    result_df = krxscraper._search_by_date(startdate='20190101', enddate='20200101')
+    result_df = krxscraper.get_data(startdate='20190601', enddate='20200101')
     print(result_df)
 
 
@@ -51,11 +51,14 @@ if __name__ == "__main__":
     arg_parser.add_argument('-test', type=str, required=True, help=f'choose an action from {test_map.keys()}')
 
     args = arg_parser.parse_args()
-    if args.test not in test_map.keys():
-        raise ValueError("No such test available")
-    else:
+    if args.test == 'all':
+        test_krxscraper()
+        test_get_filing_doc()
+        test_get_offer_doc()
+    elif args.test in test_map.keys():
         test_map[args.test]()
-
+    else:
+        raise ValueError("No such test available")
     
 
     
