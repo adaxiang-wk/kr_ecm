@@ -36,6 +36,12 @@ class scraper:
         self.sub_enddates = []
         self.settle_dates = []
         self.uops = []
+        self.tranche_bank_roles = []
+        self.tranche_bank_names = []
+        self.tranche_bank_quant = []
+        self.tranche_bank_price = []
+        self.tranche_bank_fee = []
+        self.tranche_exchange = []
 
 
     def search(self, company_name, start_date, end_date):
@@ -263,8 +269,41 @@ class scraper:
         settledate = dates_table.loc[0, '납입기일'].replace(".", "")
         self.settle_dates.append(settledate)
 
+        # bookrunner info
+        bank_df = tables_dfs[1]
+        bank_col_dict = {
+            "인수인": "bank_role",
+            "인수인.1": "bank_name",
+            "인수수량": "quantity",
+            "인수금액": "gross_price",
+            "인수대가": "bank_fee",
+        }
+        bank_df = bank_df.rename(columns=bank_col_dict)
+        bank_df = bank_df.loc[:, list(bank_col_dict.values())]
+
+        bank_role_dict = {
+            "공동대표주관회사": "bookrunner",
+            "공동주관회사": "bookrunner",
+            "대표주관회사": "lead_bookrunner",
+            "인수회사": "co_manager"
+        }
+        bank_df['bank_role'] = bank_df['bank_role'].apply(lambda x: bank_role_dict[x] if x.strip() in list(bank_role_dict.keys()) else 'bookrunner')
+        self.tranche_bank_roles.append(list(bank_df['bank_role']))
+        self.tranche_bank_names.append(list(bank_df['bank_name']))
+        self.tranche_bank_quant.append(list(bank_df['quantity']))
+        self.tranche_bank_price.append(list(bank_df['gross_price']))
+        self.tranche_bank_fee.append(list(bank_df['bank_fee']))
+
+        # tranche exchange
+        exchange_section = self.driver.find_element_by_xpath("//*[contains(text(), '주7)')]")
+        exchange_text = exchange_section.find_element_by_xpath("./following-sibling::td").text
+        if "유가증권시장" in exchange_text:
+            self.tranche_exchange.append('KOSPI')
+        else:
+            self.tranche_exchange.append('KOSDAQ')
+
+
         self.driver.switch_to.default_content()
-        
 
         # use of proceeds
         self.driver.find_element_by_partial_link_text("자금의 사용목적").click()
@@ -289,6 +328,21 @@ class scraper:
                 self.uops.append(uop)
                 break
         
+    
+    def get_all_info(self, company_name, start_date, end_date):
+        self.search(company_name, start_date, end_date)
+
+        filing_doc_found = self.find_doc("filing_doc")
+        if filing_doc_found:
+            self.get_filing_doc_info()
+            self.driver.close()
+            self.driver.switch_to.window(self.doc_window)
+
+        offer_doc_found = self.find_doc("offer_doc")
+        if offer_doc_found:
+            self.get_offer_doc_info()
+            self.driver.close()
+            self.driver.switch_to.window(self.doc_window)
 
     
     # def scrap_batch(self, cp_list, start_date, end_date):
