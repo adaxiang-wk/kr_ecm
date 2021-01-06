@@ -1,0 +1,132 @@
+{
+  "IssuerId": 0,
+  "TypeId": 0,
+  "Dates": {
+    "AnnouncementComplexDate": {
+      "TypeId": 0,
+      "Date": "2020-12-01T00:00:00Z"
+    },
+    "FilingComplexDate": {
+      "TypeId": 0,
+      "Date": "2020-12-01T00:00:00Z"
+    },
+    "PricingComplexDate": {
+      "TypeId": 0,
+      "Date": "2020-12-01T00:00:00Z"
+    },
+    "SettlementComplexDate": {
+      "TypeId": 0,
+      "Date": "2020-12-01T00:00:00Z"
+    },
+    "FirstTradeComplexDate": {
+      "TypeId": 0,
+      "Date": "2020-12-01T00:00:00Z"
+    }
+  },
+  "Shelf": {
+    "Date": "2020-12-01T00:00:00Z",
+    "Value": 0,
+    "TypeIds": [
+      0
+    ],
+    "PrimaryShares": 0,
+    "SecondaryShares": 0
+  },
+  "Shares": {
+    "PrimarySharesInitialExcludingOverallotment": 0,
+    "PrimarySharesOfferedExcludingOverallotment": 0,
+    "SecondarySharesInitialExcludingOverallotment": 0,
+    "SecondarySharesOfferedExcludingOverallotment": 0,
+    "SharesOutstandingPreDeal": 0
+  },
+  "SEC": {
+    "RegistrationNumber": "string",
+    "RegisteredId": 0,
+    "FileForm": "string"
+  },
+  "SourceNote": "string",
+  "UseOfProceedsIds": [
+    0
+  ],
+  "UseOfProceedsNote": "string",
+  "IsFirstFollowOn": true,
+  "Lawyers": [
+    {
+      "Id": 0,
+      "RoleId": 0
+    }
+  ],
+  "AuditorIds": [
+    0
+  ],
+  "ListingIds": [
+    0
+  ],
+  "UnderlyingAssetId": 0,
+  "CarveOutParentId": 0,
+  "SellingShareholderIds": [
+    0
+  ],
+  "GuarantorIds": [
+    0
+  ],
+  "Tranches": [
+    {
+      "Id": 0,
+      "SubTypeId": 0,
+      "SecurityTypeId": 0,
+      "TargetMarketIds": [
+        0
+      ],
+      "SharesDescription": "string",
+      "CurrencyId": 0,
+      "BearerRegisteredId": 0,
+      "OfferTypeIds": [
+        0
+      ],
+      "LastTradePreFiling": 0,
+      "LastTradePreOffer": 0,
+      "ISIN": "string",
+      "CUSIP": "string",
+      "SEDOL": "string",
+      "TickerSymbol": "string",
+      "Note": "string",
+      "ExchangeId": 0,
+      "IDCListingId": 0,
+      "IsInternational": true,
+      "Shares": {
+        "SharesInitialExcludingOverallotment": 0,
+        "SharesOfferedExcludingOverallotment": 0,
+        "OfferPrice": 0
+      },
+      "Unit": {
+        "Composition": "string",
+        "WarrantEntitlement": "string",
+        "DetachmentDate": "2020-12-01T00:00:00Z",
+        "InitialExerciseDate": "2020-12-01T00:00:00Z",
+        "InitialExercisePrice": 0,
+        "InitialExpiryDate": "2020-12-01T00:00:00Z",
+        "SecondExerciseDate": "2020-12-01T00:00:00Z",
+        "SecondExercisePrice": 0,
+        "SecondExpiryDate": "2020-12-01T00:00:00Z"
+      },
+      "Outstandings": [
+        {
+          "Date": "2020-12-01T00:00:00Z",
+          "Amount": 0
+        }
+      ],
+      "HasNoManagers": true,
+      "Syndicate": [
+        {
+          "Id": 0,
+          "RoleId": 0,
+          "Participation": 0,
+          "IsSelfLed": true,
+          "IsLockupControlBank": true,
+          "IndicativeParticipationPercentage": 0
+        }
+      ]
+    }
+  ]
+}
