@@ -4,10 +4,17 @@ import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
 import re
 
+
 class scraper:
-    def __init__(self):
+    def __init__(self, headless=False):
         driver_path = r'/Users/adaxiang/chromedriver'
-        self.driver = webdriver.Chrome(executable_path=driver_path)
+        options = webdriver.ChromeOptions()
+
+        if headless:
+            options.add_argument("--headless")
+
+        self.driver = webdriver.Chrome(executable_path=driver_path,
+                                       options=options)
         self.base_url = "http://marketdata.krx.co.kr/mdi#document=04060401"
 
     def _search_by_date(self, startdate, enddate):
@@ -28,7 +35,7 @@ class scraper:
         todate_input.send_keys(enddate)
 
         while True:
-            try: 
+            try:
                 self.driver.find_element_by_class_name("CI-GRID-ALIGN-CENTER")
             except NoSuchElementException:
                 print('Loading search results ...')
@@ -36,27 +43,24 @@ class scraper:
             else:
                 print('search results loaded')
                 break
-        
-        result_table_html = self.driver.find_element_by_class_name("CI-GRID-BODY-TABLE").get_attribute("outerHTML")
+
+        result_table_html = self.driver.find_element_by_class_name(
+            "CI-GRID-BODY-TABLE").get_attribute("outerHTML")
         result_df = pd.read_html(result_table_html)[0]
         self.driver.quit()
         return result_df
 
-
     def get_data(self, startdate, enddate):
         result_df = self._search_by_date(startdate, enddate)
-        result_df = result_df.rename(columns={'종목코드':'ticker', '기업명':'company', '신규상장일':'first_trade_date'})
+        result_df = result_df.rename(columns={
+            '종목코드': 'ticker',
+            '기업명': 'company',
+            '신규상장일': 'first_trade_date'
+        })
         result_df = result_df.loc[:, ['ticker', 'company', 'first_trade_date']]
-        result_df['company'] = result_df['company'].apply(lambda x: re.sub(r'[\(\[].*?[\)\]]', "", x))
-        result_df['first_trade_date'] = result_df['first_trade_date'].apply(lambda x: x.replace("/", ""))
+        result_df['company'] = result_df['company'].apply(
+            lambda x: re.sub(r'[\(\[].*?[\)\]]', "", x))
+        result_df['first_trade_date'] = result_df['first_trade_date'].apply(
+            lambda x: x.replace("/", ""))
 
         return result_df
-
-
-
-    
-        
-
-
-
-

@@ -1,7 +1,8 @@
-from scrapers.KRXscraper import scraper as krx_scraper
-from scrapers.DARTscraper import scraper as dart_scraper
+from src.scrapers.KRXscraper import scraper as krx_scraper
+from src.scrapers.DARTscraper import scraper as dart_scraper
 
 import argparse
+
 
 def test_krxscraper():
     krxscraper = krx_scraper()
@@ -11,7 +12,9 @@ def test_krxscraper():
 
 def test_get_filing_doc():
     dartsraper = dart_scraper()
-    dartsraper.search(company_name="빅히트엔터테인먼트", start_date="20200524", end_date="20201124")
+    dartsraper.search(company_name="빅히트엔터테인먼트",
+                      start_date="20200524",
+                      end_date="20201124")
     is_found = dartsraper.find_doc(doc_name='filing_doc')
 
     dartsraper.get_filing_doc_info()
@@ -29,7 +32,9 @@ def test_get_filing_doc():
 
 def test_get_offer_doc():
     dartsraper = dart_scraper()
-    dartsraper.search(company_name="빅히트엔터테인먼트", start_date="20200524", end_date="20201124")
+    dartsraper.search(company_name="빅히트엔터테인먼트",
+                      start_date="20200524",
+                      end_date="20201124")
     is_found = dartsraper.find_doc(doc_name='offer_doc')
     dartsraper.get_offer_doc_info()
     print(f'''
@@ -51,7 +56,9 @@ def test_get_offer_doc():
 
 def test_get_all_info():
     dartsraper = dart_scraper()
-    dartsraper.get_all_info(company_name="빅히트엔터테인먼트", start_date="20200524", end_date="20201124")
+    dartsraper.get_all_info(company_name="빅히트엔터테인먼트",
+                            start_date="20200524",
+                            end_date="20201124")
 
     print(f'''
     annoucement_date: {dartsraper.annouce_dates}\n
@@ -76,13 +83,16 @@ def test_get_all_info():
 
 if __name__ == "__main__":
     test_map = {
-        'krxscraper':test_krxscraper, 
-        'get_filing_doc':test_get_filing_doc, 
-        'get_offer_doc':test_get_offer_doc,
-        'get_all_info':test_get_all_info
+        'krxscraper': test_krxscraper,
+        'get_filing_doc': test_get_filing_doc,
+        'get_offer_doc': test_get_offer_doc,
+        'get_all_info': test_get_all_info
     }
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-test', type=str, required=True, help=f'choose an action from {test_map.keys()}')
+    arg_parser.add_argument('-test',
+                            type=str,
+                            required=True,
+                            help=f'choose an action from {test_map.keys()}')
 
     args = arg_parser.parse_args()
     if args.test == 'all':
@@ -93,10 +103,3 @@ if __name__ == "__main__":
         test_map[args.test]()
     else:
         raise ValueError("No such test available")
-    
-
-    
-
-    
-    
-    
