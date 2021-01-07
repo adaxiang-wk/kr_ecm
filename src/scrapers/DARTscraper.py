@@ -289,30 +289,56 @@ class scraper:
         tables_obj = self.driver.find_elements_by_xpath(
             "//p[@class='section-2']/following-sibling::table")[1:4]
 
-        tables_dfs = []
+        tables_dfs = {}
+        reach_last = False
         for table_obj in tables_obj:
+            if reach_last:
+                break
             table_html = table_obj.get_attribute("outerHTML")
+            # print(">>>>>>>>>>>>>>>>>>>>>")
+            # print(table_html)
             df = pd.read_html(table_html)[0]
-            tables_dfs.append(df)
+            if "청약기일" in str(table_html):
+                reach_last = True 
+                tables_dfs.update({'date_df': df})
+            elif "인수인" in str(table_html):
+                tables_dfs.update({'bank_df': df})
+            else:
+                tables_dfs.update({'other_df': df})
 
-        dates_table = tables_dfs[-1]
+        dates_table = tables_dfs['date_df']
         # subscription date
         if '청약기일' not in dates_table.columns:
             col_names = dates_table.iloc[0]
             dates_table = dates_table[1:]
             dates_table.columns = col_names
             dates_table = dates_table.reset_index(drop=True)
-        
-        subdates = dates_table.loc[0, '청약기일'].replace(".", "").split(" ")
+
+        dates_str = dates_table.loc[0, '청약기일'].replace('.', "")
+        if "년" in dates_str:
+            digits = re.findall(r"\d+|~", dates_str)  
+            digits_str = "".join(digits)
+            subdates = re.split(r"~", digits_str)
+        else:
+            subdates = re.split(r"\s|~", dates_str)
+            subdates = [re.sub(r"[\(\[].*?[\)\]]", "", date) for date in subdates if len(date) > 0]
+        print(subdates)
         self.sub_startdates.append(subdates[0])
         self.sub_enddates.append(subdates[-1])
 
         # settlement date
-        settledate = dates_table.loc[0, '납입기일'].replace(".", "")
+        settledate_str = dates_table.loc[0, '납입기일'].replace(".", "")
+        if "년" in settledate_str:
+            digits = re.findall(r"\d+", settledate_str)  
+            settledate = "".join(digits)
+        else:
+            settledate = settledate_str
+        if len(settledate) > 8:
+            settledate = re.sub(r"[\(\[].*?[\)\]]", "", settledate)
         self.settle_dates.append(settledate)
 
         # bookrunner info
-        bank_df = tables_dfs[1]
+        bank_df = tables_dfs['bank_df']
         if '인수인' not in bank_df.columns:
             col_names = bank_df.iloc[0]
             bank_df = bank_df[1:]
@@ -322,6 +348,7 @@ class scraper:
                 cols = list(bank_df.columns)
                 cols[1] = f"{cols[0]}.1"
                 bank_df.columns = cols 
+
         bank_col_dict = {
             "인수인": "bank_role",
             "인수인.1": "bank_name",
@@ -373,7 +400,6 @@ class scraper:
 
         uop_section = self.driver.find_element_by_xpath(
             "//*[contains(text(), '자금의 사용목적')]").find_element_by_xpath('..')
-        print(uop_section.get_attribute('outerHTML'))
         uop_table = uop_section.find_elements_by_xpath(
             "./following-sibling::table")[1].get_attribute("outerHTML")
         uop_df = pd.read_html(uop_table)[0]
