@@ -56,9 +56,9 @@ def test_get_offer_doc():
 
 def test_get_all_info():
     dartsraper = dart_scraper()
-    dartsraper.get_all_info(company_name="빅히트엔터테인먼트",
-                            start_date="20200524",
-                            end_date="20201124")
+    dartsraper.get_all_info(company_name="317830",
+                            start_date="20190801",
+                            end_date="20190830")
 
     print(f'''
     annoucement_date: {dartsraper.annouce_dates}\n
@@ -78,7 +78,11 @@ def test_get_all_info():
     bank roles: {dartsraper.tranche_bank_roles}\n
     bank quantity: {dartsraper.tranche_bank_quant}\n
     bank price: {dartsraper.tranche_bank_price}\n
-    bank fee: {dartsraper.tranche_bank_fee}\n''')
+    bank fee: {dartsraper.tranche_bank_fee}\n
+    tranche general: {dartsraper.tranche_general}\n
+    tranche investor: {dartsraper.tranche_investor}\n
+    tranche employee: {dartsraper.tranche_employee}\n
+    total share: {dartsraper.total_share}''')
 
 
 if __name__ == "__main__":

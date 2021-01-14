@@ -48,6 +48,10 @@ class scraper:
         self.tranche_bank_price = []
         self.tranche_bank_fee = []
         self.tranche_exchange = []
+        self.tranche_general = []
+        self.tranche_investor = []
+        self.tranche_employee = []
+        self.total_share = []
 
     def search(self, company_name, start_date, end_date):
         print('searching...')
@@ -200,33 +204,95 @@ class scraper:
         iframe = self.driver.find_element_by_tag_name('iframe')
         self.driver.switch_to_frame(iframe)
 
-        target_sentence = self.driver.find_elements_by_xpath(
-            "//p[@class='section-2']/following-sibling::p")[1]
-        target_words = str(target_sentence.text).split(" ")
 
-        # find new share value
-        if "신주모집" in target_words:
-            idx = target_words.index("신주모집")
-            value = target_words[idx + 1][:-2].replace(",", "")
-            if value.isdigit():
-                new_share = int(value)
-                self.new_shares.append(new_share)
+        target_sentences = self.driver.find_elements_by_xpath("//*[contains(text(), '신주모집')]")
+        if len(target_sentences) > 0:
+            target_sentence = target_sentences[0].text
+            target_words = str(target_sentence).split(" ")
+
+            # find new share value
+            if "신주모집" in target_words:
+                idx = target_words.index("신주모집")
+                value_str = target_words[idx + 1].replace(",", "")
+                val_lists = re.findall(r"\d{4,}", value_str) 
+                if len(val_lists) > 0:
+                    value = val_lists[0]
+                    new_share = int(value)
+                    self.new_shares.append(new_share)
+                else:
+                    self.new_shares.append(-1)
+        
+            # find second share value
+            if "구주매출" in target_words:
+                idx = target_words.index("구주매출")
+                second_value_str = target_words[idx + 1].replace(",", "")
+                second_val_lists = re.findall(r"\d{4,}", second_value_str)
+                if len(second_val_lists) > 0:
+                    second_value = second_val_lists[0]
+                    second_share = int(second_value)
+                else:
+                    second_share = -1
+                self.second_shares.append(second_share)
             else:
-                self.new_shares.append(-1)
+                self.second_shares.append(-1)
         else:
             self.new_shares.append(-1)
-
-        # find second share value
-        if "구주매출" in target_words:
-            idx = target_words.index("구주매출")
-            second_share_val = target_words[idx + 1][:-2].replace(",", "")
-            if second_share_val.isdigit():
-                second_share = int(second_share_val)
-            else:
-                second_share = -1
-            self.second_shares.append(second_share)
-        else:
             self.second_shares.append(-1)
+
+        tranche_tables_c = self.driver.find_elements_by_tag_name("table")
+        found_tranche_table = False
+        table_html = ""
+        for t in tranche_tables_c:
+            table_html = t.get_attribute("outerHTML")
+            if ("기관투자자" in table_html) and (any(["100.0%" in table_html, "100%" in table_html, "100.00%" in table_html])):
+                found_tranche_table = True
+                break 
+
+        if found_tranche_table:
+            tranche_df = pd.read_html(table_html)[0]
+            tranche_df = tranche_df.reset_index(drop=True)
+
+            korean_dict = {
+                "우리사주조합": "employee_tranche", 
+                "기관투자자": "investor_tranche", 
+                "일반청약자": "general_tranche", 
+                "일반투자자": "general_tranche",
+                "합계": "total_share"
+            }
+
+
+            for _, row in tranche_df.iterrows():
+                row = row.tolist()
+                if row[0] in korean_dict.keys():
+                    tranche_name = korean_dict[row[0]]
+
+                    if tranche_name == "employee_tranche":
+                        self.tranche_employee.append(row[1])
+                    elif tranche_name == "investor_tranche":
+                        self.tranche_investor.append(row[1])
+                    elif tranche_name == "total_share":
+                        self.total_share.append(row[1])
+                    elif tranche_name == "general_tranche":
+                        self.tranche_general.append(row[1])
+                else:
+                    continue
+
+        # tranche_tables_ls = []
+        # for t in tranche_tables:
+        #     if len(t.text) > 5:
+        #         continue
+        #     # print(t.get_attribute("outerHTML"))
+        #     tables = t.find_elements_by_xpath("//ancestor-or-self::table")
+        #     for table in tables:
+        #         table_html = table.get_attribute("outerHTML")
+
+        #         if ("100.0%" not in table_html) and ("100%" not in table_html) and ("100.00%" not in table_html):
+        #             continue
+        #         else:
+        #             tranche_tables_ls.append(table_html)
+
+        # tranche_table_html = tranche_tables_ls[0]
+        # print(tranche_table_html)
 
         self.driver.switch_to.default_content()
 
@@ -451,7 +517,11 @@ class scraper:
             'bank_quantity': self.tranche_bank_quant,
             'bank_price': self.tranche_bank_price,
             'bank_fee': self.tranche_bank_fee,
-            'tranche_exchange': self.tranche_exchange
+            'tranche_exchange': self.tranche_exchange, 
+            'tranche_general': self.tranche_general,
+            'tranche_investor': self.tranche_investor, 
+            'tranche_employee': self.tranche_employee,
+            'total_share': self.total_share
         }
 
         return all_data_points

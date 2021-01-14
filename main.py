@@ -13,28 +13,32 @@ DATA_FILENAME = 'data_df.csv'
 SEARCH_START_DATE = '20190601'
 SEARCH_END_DATE = '20190901'
 
-COL_NAMES = [
-    'ticker',
-    'company',
-    'first_trade_date',
-    'annouce_date',
-    'new_shares',
-    'second_shares',
-    'share_outstandings',
-    'tranche_filing_high_range',
-    'tranche_filing_low_range',
-    'pricing_date',
-    'subsprition_start_date',
-    'subsprition_end_date',
-    'settlement_date',
-    'use_of_proceeds',
-    'banks',
-    'bank_roles',
-    'bank_quantity',
-    'bank_price',
-    'bank_fee',
-    'tranche_exchange'
-]
+# COL_NAMES = [
+#     'ticker',
+#     'company',
+#     'first_trade_date',
+#     'annouce_date',
+#     'new_shares',
+#     'second_shares',
+#     'share_outstandings',
+#     'tranche_filing_high_range',
+#     'tranche_filing_low_range',
+#     'pricing_date',
+#     'subsprition_start_date',
+#     'subsprition_end_date',
+#     'settlement_date',
+#     'use_of_proceeds',
+#     'banks',
+#     'bank_roles',
+#     'bank_quantity',
+#     'bank_price',
+#     'bank_fee',
+#     'tranche_exchange',
+#     'tranche_general', 
+#     'tranche_investor', 
+#     'tranche_employee', 
+#     'total_share'
+# ]
 
 if __name__ == "__main__":
     deals_fp = os.path.join(DATA_DIR, DEAL_FILENAME)
@@ -75,9 +79,11 @@ if __name__ == "__main__":
         
         all_data_list = [ticker, company_name, first_trade_date]
         all_data_list.extend(list(data_dict.values()))
+        col_name = ['ticker', 'company_name', 'first_trade_date']
+        col_name.extend(list(data_dict.keys()))
 
         if idx == 0:
-            du.write_to_csv(data_fp, all_data_list, header=COL_NAMES)
+            du.write_to_csv(data_fp, all_data_list, header=col_name)
         else:
             du.write_to_csv(data_fp, all_data_list)
     
