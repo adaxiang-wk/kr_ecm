@@ -18,6 +18,7 @@ class scraper:
         self.base_url = "http://marketdata.krx.co.kr/mdi#document=04060401"
 
     def _search_by_date(self, startdate, enddate):
+        print(startdate, enddate)
         self.driver.get(self.base_url)
         while True:
             try:
