@@ -32,9 +32,9 @@ def test_get_filing_doc():
 
 def test_get_offer_doc():
     dartsraper = dart_scraper()
-    dartsraper.search(company_name="빅히트엔터테인먼트",
-                      start_date="20200524",
-                      end_date="20201124")
+    dartsraper.search(company_name="286750",
+                      start_date="20190801",
+                      end_date="20190830")
     is_found = dartsraper.find_doc(doc_name='offer_doc')
     dartsraper.get_offer_doc_info()
     print(f'''
@@ -56,7 +56,7 @@ def test_get_offer_doc():
 
 def test_get_all_info():
     dartsraper = dart_scraper()
-    dartsraper.get_all_info(company_name="317830",
+    dartsraper.get_all_info(company_name="286750",
                             start_date="20190801",
                             end_date="20190830")
 

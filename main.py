@@ -4,43 +4,87 @@ import src.data_utils as du
 
 import pandas as pd
 import os
+import ast
+import re
 
 DATA_DIR = './data'
 
-DEAL_FILENAME = 'deals_df.csv'
-DATA_FILENAME = 'data_df.csv'
+DEAL_FILENAME = 'deals2_df.csv'
+DATA_FILENAME = 'data2_df.csv'
 
-SEARCH_START_DATE = '20190601'
-SEARCH_END_DATE = '20190901'
+SEARCH_START_DATE = '20200601'
+SEARCH_END_DATE = '20201231'
 
-# COL_NAMES = [
-#     'ticker',
-#     'company',
-#     'first_trade_date',
-#     'annouce_date',
-#     'new_shares',
-#     'second_shares',
-#     'share_outstandings',
-#     'tranche_filing_high_range',
-#     'tranche_filing_low_range',
-#     'pricing_date',
-#     'subsprition_start_date',
-#     'subsprition_end_date',
-#     'settlement_date',
-#     'use_of_proceeds',
-#     'banks',
-#     'bank_roles',
-#     'bank_quantity',
-#     'bank_price',
-#     'bank_fee',
-#     'tranche_exchange',
-#     'tranche_general', 
-#     'tranche_investor', 
-#     'tranche_employee', 
-#     'total_share'
-# ]
 
-if __name__ == "__main__":
+def clean_data(save_fp=""):
+    def clean_int_list(ls):
+        ls = ast.literal_eval(ls)
+        if len(ls) == 0:
+            return ls
+        else:
+            ls = [int(i) for i in ls]
+            return ls
+
+    def get_price_perc(price_str):
+        price_str = price_str.replace(",", "")
+        price_str = price_str.replace(" ", "")
+        price_pattern = r'\d+주'
+        perc_pattern = r'\d+.\d+%'
+
+        price = re.findall(price_pattern, price_str)
+        if len(price) > 0:
+            price = int(price[0][:-1])
+        else:
+            price = -1
+
+        perc = re.findall(perc_pattern, price_str)
+        if len(perc) > 0:
+            perc = float(perc[0][:-1])
+        else:
+            perc = -1.0
+
+        return [price, perc]
+
+    data_fp = os.path.join(DATA_DIR, DATA_FILENAME)
+    df = pd.read_csv(data_fp)
+    df.loc[:, ['banks']] = df['banks'].apply(lambda x: x
+                                             if x == '[]' else x[1:-1])
+    df.loc[:, ['bank_roles']] = df['bank_roles'].apply(
+        lambda x: x if x == '[]' else x[1:-1])
+
+    df.loc[:, ['bank_quantity']] = df['bank_quantity'].apply(
+        lambda x: x if x == '[]' else x[1:-1])
+    df.loc[:, ['bank_quantity']] = df['bank_quantity'].apply(
+        lambda x: clean_int_list(x))
+
+    df.loc[:, ['bank_price']] = df['bank_price'].apply(
+        lambda x: x if x == '[]' else x[1:-1])
+    df.loc[:, ['bank_price']] = df['bank_price'].apply(
+        lambda x: clean_int_list(x))
+
+    df.loc[:, ['bank_fee']] = df['bank_fee'].apply(lambda x: x
+                                                   if x == '[]' else x[1:-1])
+    df.loc[:, ['bank_fee']] = df['bank_fee'].apply(lambda x: clean_int_list(x))
+
+    df.loc[:, ['use_of_proceeds']] = df['use_of_proceeds'].apply(
+        lambda x: list(set(ast.literal_eval(x))))
+
+    df.loc[:, ['tranche_general']] = df['tranche_general'].apply(
+        lambda x: get_price_perc(x))
+    df.loc[:, ['tranche_investor']] = df['tranche_investor'].apply(
+        lambda x: get_price_perc(x))
+    df.loc[:, ['tranche_employee']] = df['tranche_employee'].apply(
+        lambda x: get_price_perc(x))
+    df.loc[:, ['total_share']] = df['total_share'].apply(
+        lambda x: get_price_perc(x))
+
+    if len(save_fp) > 0:
+        df.to_csv(save_fp, index=False)
+    else:
+        df.to_csv(data_fp, index=False)
+
+
+def scrape_data_to_csv():
     deals_fp = os.path.join(DATA_DIR, DEAL_FILENAME)
     data_fp = os.path.join(DATA_DIR, DATA_FILENAME)
 
@@ -49,10 +93,10 @@ if __name__ == "__main__":
     else:
         krxscraper = krx_scraper(headless=False)
         deals_df = krxscraper.get_data(startdate=SEARCH_START_DATE,
-                                    enddate=SEARCH_END_DATE)
+                                       enddate=SEARCH_END_DATE)
 
     deals_df = deals_df.iloc[:, :].reset_index()
-    
+
     scrapped_tickers = []
     if os.path.exists(data_fp):
         already_scrapped = pd.read_csv(data_fp)
@@ -70,13 +114,14 @@ if __name__ == "__main__":
 
         print(f"Scrapping {ticker} {company_name}")
 
-        dart_startd_str, dart_endd_str = du.format_search_date_str(str(first_trade_date), days_diff=15)
+        dart_startd_str, dart_endd_str = du.format_search_date_str(
+            str(first_trade_date), days_diff=30)
 
         dartsraper = dart_scraper()
         data_dict = dartsraper.get_all_info(company_name=ticker,
-                            start_date=dart_startd_str,
-                            end_date=dart_endd_str)
-        
+                                            start_date=dart_startd_str,
+                                            end_date=dart_endd_str)
+
         all_data_list = [ticker, company_name, first_trade_date]
         all_data_list.extend(list(data_dict.values()))
         col_name = ['ticker', 'company_name', 'first_trade_date']
@@ -86,4 +131,8 @@ if __name__ == "__main__":
             du.write_to_csv(data_fp, all_data_list, header=col_name)
         else:
             du.write_to_csv(data_fp, all_data_list)
-    
+
+
+if __name__ == "__main__":
+    scrape_data_to_csv()
+    clean_data(save_fp="./data/cleaned_data2_fp.csv")

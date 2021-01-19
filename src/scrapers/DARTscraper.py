@@ -13,6 +13,16 @@ from selenium.common.exceptions import NoSuchElementException
 # import re
 # import csv
 
+UOP_DICT = {
+    "운영자금": "General Corporate Purposes",
+    "시설자금": "Capital Expenditures",
+    "차환": "Repay Debt",
+    "상환": "Repay Debt",
+    "타법인주식획득": "Acquisitions",
+    "연구개발비": "Research and development",
+    "연구개발": "Research and development",
+}
+
 
 class scraper:
     def __init__(self, headless=False):
@@ -464,26 +474,80 @@ class scraper:
         self.driver.find_element_by_partial_link_text("자금의 사용목적").click()
         self.driver.switch_to_frame(iframe)
 
-        uop_section = self.driver.find_element_by_xpath(
-            "//*[contains(text(), '자금의 사용목적')]").find_element_by_xpath('..')
-        uop_table = uop_section.find_elements_by_xpath(
-            "./following-sibling::table")[1].get_attribute("outerHTML")
-        uop_df = pd.read_html(uop_table)[0]
-        uop_cols = list(uop_df.columns)
+        # uop_section = self.driver.find_elements_by_xpath(
+        #     "//*[contains(text(), '자금의 사용 계획')]")
+        # if len(uop_section) > 0:
+        #     uop_section = uop_section[0].find_element_by_xpath('.')
 
-        uop_dict = {
-            "운영자금": "GCP",
-            "시설자금": "Expansion",
-            "차환": "Repay debt",
-            "상환": "Repay debt",
-            "타법인주식획득": "Acquisition"
-        }
+        #     uop_table = uop_section.find_elements_by_xpath(
+        #         "./following-sibling::table")[0]
+        #     if len(uop_table.find_elements_by_tag_name("tr")) < 2:
+        #         uop_table = uop_section.find_elements_by_xpath(
+        #         "./following-sibling::table")[1]
+        #     uop_table = uop_table.get_attribute("outerHTML")
+        #     uop_df = pd.read_html(uop_table)[0]
+        #     print(uop_df)
+        #     uop_cols = list(uop_df.columns)
 
-        for uop_kr in uop_dict.keys():
-            if uop_kr in uop_cols:
-                uop = uop_dict[uop_kr]
-                self.uops.append(uop)
-                break
+        #     for col in uop_cols:
+        #         for k in UOP_DICT.keys():
+        #             if k in col:
+        #                 self.uops.append(UOP_DICT[k])
+        #                 break
+                    
+        # else:
+        uop_sections = self.driver.find_elements_by_xpath(
+            "//*[contains(text(), '2. 자금의 사용 목적')]")
+
+
+        if len(uop_sections) < 1:
+            uop_sections = self.driver.find_elements_by_xpath(
+                "//*[contains(text(), '2. 자금의 사용목적')]")
+
+
+        if len(uop_sections) > 0:
+            
+            uop_section = uop_sections[0].find_element_by_xpath('..')
+            uop_table = uop_section.find_elements_by_xpath(
+                "./following-sibling::table")
+            if len(uop_table) < 1:
+                uop_section = uop_sections[0].find_element_by_xpath('.')
+
+            if len(uop_table) > 0:
+                uop_table = uop_section.find_elements_by_xpath(
+                    "./following-sibling::table")
+                if len(uop_table) > 0:
+                    table = uop_table[0]
+                    if len(table.find_elements_by_tag_name("tr")) < 2:
+                        table = uop_table[1]
+                    uop_table_html = table.get_attribute("outerHTML")
+                    uop_df = pd.read_html(uop_table_html)[0]
+                    print(uop_df)
+
+
+                    for col in uop_df.columns:
+                        for k in UOP_DICT.keys():
+                            if not isinstance(col, int):
+                                if k in col:
+                                    self.uops.append(UOP_DICT[k])
+                                    break
+                            
+                    
+                    if len(self.uops) < 1:
+                        for _, row in uop_df.iterrows():
+                            row = row.to_list()
+                            for k in UOP_DICT.keys():
+                                if isinstance(row[0], str):
+                                    if k in row[0]:
+                                        self.uops.append(UOP_DICT[k])
+                                        break
+                                elif isinstance(row[1], str):
+                                    if k in row[1]:
+                                        self.uops.append(UOP_DICT[k])
+                                        break
+                                    
+
+
 
     def get_all_info(self, company_name, start_date, end_date):
         self.search(company_name, start_date, end_date)
