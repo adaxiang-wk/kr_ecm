@@ -34,7 +34,7 @@ def write_to_csv(save_fp, record, header=[]):
 
 
 def format_search_date_str(base_date_str, days_diff=15):
-    base_date_obj = datetime.strptime(base_date_str, '%Y%m%d')
+    base_date_obj = datetime.strptime(base_date_str, '%Y/%m/%d')
     start_date_obj = base_date_obj - timedelta(days=15)
     end_date_obj = base_date_obj + timedelta(days=15)
 
