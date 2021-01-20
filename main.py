@@ -9,11 +9,11 @@ import re
 
 DATA_DIR = './data'
 
-DEAL_FILENAME = 'deals2_df.csv'
-DATA_FILENAME = 'data2_df.csv'
+DEAL_FILENAME = 'deals_df_test.csv'
+DATA_FILENAME = 'data_df_test.csv'
 
-SEARCH_START_DATE = '20200601'
-SEARCH_END_DATE = '20201231'
+SEARCH_START_DATE = '20201207'
+SEARCH_END_DATE = '20201224'
 
 
 def clean_data(save_fp=""):
@@ -94,6 +94,7 @@ def scrape_data_to_csv():
         krxscraper = krx_scraper(headless=False)
         deals_df = krxscraper.get_data(startdate=SEARCH_START_DATE,
                                        enddate=SEARCH_END_DATE)
+        deals_df.to_csv(deals_fp)
 
     deals_df = deals_df.iloc[:, :].reset_index()
 
@@ -103,8 +104,7 @@ def scrape_data_to_csv():
         scrapped_tickers = list(already_scrapped['ticker'])
 
     for idx, record in deals_df.iterrows():
-        company_name = record['company']
-        first_trade_date = record['first_trade_date']
+        price_date = record['price_date']
         ticker = record['ticker']
 
         if len(scrapped_tickers) > 0:
@@ -112,19 +112,19 @@ def scrape_data_to_csv():
                 print(f"{ticker} already scrapped")
                 continue
 
-        print(f"Scrapping {ticker} {company_name}")
+        print(f"Scrapping {ticker}")
 
         dart_startd_str, dart_endd_str = du.format_search_date_str(
-            str(first_trade_date), days_diff=30)
+            str(price_date), days_diff=30)
 
         dartsraper = dart_scraper()
         data_dict = dartsraper.get_all_info(company_name=ticker,
                                             start_date=dart_startd_str,
                                             end_date=dart_endd_str)
 
-        all_data_list = [ticker, company_name, first_trade_date]
+        all_data_list = record.to_list()
         all_data_list.extend(list(data_dict.values()))
-        col_name = ['ticker', 'company_name', 'first_trade_date']
+        col_name = list(deals_df.columns)
         col_name.extend(list(data_dict.keys()))
 
         if idx == 0:
@@ -135,4 +135,4 @@ def scrape_data_to_csv():
 
 if __name__ == "__main__":
     scrape_data_to_csv()
-    clean_data(save_fp="./data/cleaned_data2_fp.csv")
+    clean_data(save_fp="./data/cleaned_data_df_test.csv")
